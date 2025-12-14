@@ -1,36 +1,72 @@
-// Define available AI models
-const AI_MODELS = {
-  chatgpt: {
-    name: "ChatGPT",
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    instructions: "Get your OpenAI API key at https://platform.openai.com/account/api-keys"
-  },
-  gemini: {
-    name: "Gemini",
-    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-    instructions: "Get your Gemini API key at https://aistudio.google.com/app/apikey"
-  },
-  claude: {
-    name: "Claude",
-    endpoint: "https://api.anthropic.com/v1/complete",
-    instructions: "Get your Claude API key at https://console.anthropic.com/"
-  },
-  bard: {
-    name: "Bard",
-    endpoint: "https://bard.google.com/api", // hypothetical placeholder
-    instructions: "Get your Bard API key at https://bard.google.com/"
-  }
+// LocalStorage keys
+const STORAGE_KEYS = {
+    apiKeys: "LAMBO_API_KEYS",           // Object {chatgpt: key, gemini: key, ...}
+    chatHistory: "LAMBO_CHAT_HISTORY",   // Array of messages {type, text, model, timestamp}
+    multiAIMode: "LAMBO_MULTI_AI",
+    smartSummarization: "LAMBO_SMART_SUM"
 };
 
-// Function to list available AI models
-function getAvailableModels() {
-  return Object.keys(AI_MODELS).map(key => AI_MODELS[key]);
+// ---------- API Key Functions ----------
+function saveAPIKey(modelKey, apiKey) {
+    const keys = JSON.parse(localStorage.getItem(STORAGE_KEYS.apiKeys) || "{}");
+    keys[modelKey] = apiKey;
+    localStorage.setItem(STORAGE_KEYS.apiKeys, JSON.stringify(keys));
 }
 
-// Function to get model info by key
-function getModel(key) {
-  return AI_MODELS[key] || null;
+function getAPIKey(modelKey) {
+    const keys = JSON.parse(localStorage.getItem(STORAGE_KEYS.apiKeys) || "{}");
+    return keys[modelKey] || "";
 }
 
-// Export functions if using modules
-// export { AI_MODELS, getAvailableModels, getModel };
+function removeAPIKey(modelKey) {
+    const keys = JSON.parse(localStorage.getItem(STORAGE_KEYS.apiKeys) || "{}");
+    delete keys[modelKey];
+    localStorage.setItem(STORAGE_KEYS.apiKeys, JSON.stringify(keys));
+}
+
+// ---------- Chat History Functions ----------
+function saveMessage(type, text, model="User") {
+    const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.chatHistory) || "[]");
+    history.push({
+        type,        // 'user' or 'ai'
+        text,
+        model,
+        timestamp: Date.now()
+    });
+    // Keep max 200 messages
+    if (history.length > 200) history.splice(0, history.length - 200);
+    localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(history));
+}
+
+function loadHistory() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.chatHistory) || "[]");
+}
+
+function clearHistory() {
+    localStorage.removeItem(STORAGE_KEYS.chatHistory);
+}
+
+// ---------- Multi-AI & Smart Summarization ----------
+function setMultiAIMode(enabled) {
+    localStorage.setItem(STORAGE_KEYS.multiAIMode, JSON.stringify(enabled));
+}
+
+function getMultiAIMode() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.multiAIMode) || "false");
+}
+
+function setSmartSummarization(enabled) {
+    localStorage.setItem(STORAGE_KEYS.smartSummarization, JSON.stringify(enabled));
+}
+
+function getSmartSummarization() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.smartSummarization) || "false");
+}
+
+// ---------- Export functions if using modules ----------
+// export {
+//     saveAPIKey, getAPIKey, removeAPIKey,
+//     saveMessage, loadHistory, clearHistory,
+//     setMultiAIMode, getMultiAIMode,
+//     setSmartSummarization, getSmartSummarization
+// };
