@@ -3,208 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo Chat — Nothing App</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@material/web@1.0.0/web.css">
-<style>
-:root{
-  --md-sys-color-background:#000;
-  --md-sys-color-surface:#121212;
-  --md-sys-color-on-surface:#fff;
-  --md-sys-color-primary:#6200ee;
-  --md-sys-color-on-primary:#fff;
-  --radius:20px;
-  --shadow:0 8px 24px rgba(0,0,0,0.6);
-}
+<title>Lambo AI Chat</title>
 
-/* Reset */
-*{box-sizing:border-box;margin:0;padding:0;}
-body{
-  font-family:'Roboto',sans-serif;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  background:var(--md-sys-color-background);
-  color:var(--md-sys-color-on-surface);
-  padding:16px;
-  min-height:100vh;
-  gap:12px;
-}
+<!-- Material 3 & Custom Styles -->
+<link rel="stylesheet" href="css/material3.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/settings.css">
 
-.logo{
-  font-weight:900;font-size:36px;
-  background:linear-gradient(90deg,#6a00ff,#009dff);
-  background-size:300% 300%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:logoIdle 6s ease-in-out infinite;margin-bottom:4px;
-}
-@keyframes logoIdle{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-@keyframes logoThink{0%{background-position:0% 50%;filter:hue-rotate(0deg)}50%{background-position:100% 50%;filter:hue-rotate(180deg)}100%{background-position:0% 50%;filter:hue-rotate(360deg)}}
-
-.subtitle{color:#bfbfbf;font-size:14px;text-align:center; margin-bottom:8px;}
-
-/* Chat input card */
-.card{
-  width:100%;max-width:420px;background:var(--md-sys-color-surface);
-  border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);
-  display:flex;flex-direction:column;gap:10px;
-}
-.row{display:flex;gap:10px;align-items:center;}
-input[type="text"]{
-  flex:1;padding:12px 16px;font-size:15px;border-radius:28px;border:none;
-  background:#1e1e1e;color:#fff;outline:none;
-}
-button.btn{
-  background:var(--md-sys-color-primary);
-  color:var(--md-sys-color-on-primary);
-  border:none;border-radius:28px;padding:12px 16px;font-weight:700;cursor:pointer;transition:all 0.2s;
-}
-button.btn:hover{filter:brightness(1.1);}
-button#clearBtn{background:#333;color:#fff;}
-
-/* Chat area */
-.chatArea{
-  width:100%;max-width:420px;flex:1;display:flex;flex-direction:column;gap:6px;overflow-y:auto;padding:8px;
-}
-.message{
-  padding:10px 14px;border-radius:18px;max-width:75%;animation:fadeIn 0.3s ease;position:relative;cursor:pointer;transition:all 0.2s;
-}
-.message.user{
-  align-self:flex-end;background:#6200ee;color:#fff;
-  border-bottom-right-radius:4px;border-bottom-left-radius:18px;border-top-left-radius:18px;border-top-right-radius:18px;
-}
-.message.lambo{
-  align-self:flex-start;background:#1e1e1e;color:#fff;
-  border-bottom-left-radius:4px;border-bottom-right-radius:18px;border-top-left-radius:18px;border-top-right-radius:18px;
-}
-.message:hover{opacity:0.9; transform:scale(1.02);}
-.message-controls{
-  position:absolute; top:-6px; right:-6px; display:flex; gap:4px; opacity:0; transition:opacity 0.2s;
-}
-.message:hover .message-controls{opacity:1;}
-.message-controls button{
-  background:#333;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-
-/* Typing cursor */
-.typingCursor{display:inline-block;width:8px;height:16px;background:#fff;margin-left:6px;opacity:0.9;animation:blink 1s step-end infinite;vertical-align:middle;}
-@keyframes blink{50%{opacity:0}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-
-</style>
 </head>
 <body>
 
-<div class="logo" id="logo">LAMBO</div>
-<div class="subtitle">your friendly AI chat assistant 😺</div>
+<!-- Chat Area -->
+<div id="chatArea" class="chatArea"></div>
 
-<div class="chatArea" id="chatArea"></div>
-
-<div class="card">
-  <div class="row">
-    <input id="q" type="text" placeholder="Type a message..." />
-    <button class="btn" id="sendBtn">SEND</button>
-  </div>
-  <button class="btn" id="clearBtn">Clear Input</button>
+<!-- Input Row -->
+<div class="inputCard">
+    <div class="inputRow">
+        <input type="text" id="chatInput" placeholder="Ask Lambo... ✨" />
+        <button id="sendBtn" class="sendBtn">Send</button>
+    </div>
 </div>
 
+<!-- Floating Settings Button -->
+<button id="settingsBtn" class="settingsFloat" title="Settings ⚙">⚙</button>
+
+<!-- Settings Overlay -->
+<div id="settingsOverlay" class="settingsOverlay">
+    <div class="settingsBox">
+        <h2>Settings ⚡</h2>
+
+        <!-- API Keys -->
+        <div class="label">API Keys 🔑</div>
+        <div id="apiKeysContainer"></div>
+
+        <!-- Multi-AI Mode -->
+        <div class="toggleRow">
+            <label>Enable Multi-AI Responses</label>
+            <input type="checkbox" id="multiAIMode" />
+        </div>
+
+        <!-- Smart Summarization -->
+        <div class="toggleRow">
+            <label>Smart Summarization</label>
+            <input type="checkbox" id="smartSummarization" />
+        </div>
+
+        <!-- Close & Save -->
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+            <button id="closeSettingsBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- JS Modules -->
+<script src="js/storage.js"></script>
+<script src="js/aiModels.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+
 <script>
-const LS={apiKey:'LAMBO_API_KEY',history:'LAMBO_HISTORY'};
-let API_KEY=localStorage.getItem(LS.apiKey)||'';
-let HISTORY=JSON.parse(localStorage.getItem(LS.history)||'[]');
+/* ---------- Settings Overlay Logic ---------- */
+const settingsBtn = document.getElementById('settingsBtn');
+const overlay = document.getElementById('settingsOverlay');
+const closeBtn = document.getElementById('closeSettingsBtn');
+const apiKeysContainer = document.getElementById('apiKeysContainer');
+const multiAICheck = document.getElementById('multiAIMode');
+const smartSumCheck = document.getElementById('smartSummarization');
 
-const chatArea=document.getElementById('chatArea');
-const qEl=document.getElementById('q');
-const sendBtn=document.getElementById('sendBtn');
-const clearBtn=document.getElementById('clearBtn');
+// Show/Hide settings
+settingsBtn.addEventListener('click', () => overlay.style.display = 'flex');
+closeBtn.addEventListener('click', () => overlay.style.display = 'none');
 
-sendBtn.addEventListener('click',sendMessage);
-qEl.addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
-clearBtn.addEventListener('click',()=>qEl.value='');
+// Populate API Key Inputs
+function renderAPIKeyInputs() {
+    apiKeysContainer.innerHTML = '';
+    getAvailableModels().forEach(model => {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.flexDirection = 'column';
+        div.style.marginBottom = '8px';
 
-// Initialize chat history
-function loadHistory(){
-  if(HISTORY.length>0){
-    HISTORY.forEach(msg=>appendMessage(msg.text,msg.type,false));
-  }
-}
-loadHistory();
+        const label = document.createElement('label');
+        label.textContent = `${model.name} API Key`;
+        label.style.fontSize = '12px';
+        label.style.marginBottom = '4px';
 
-// Append message with optional animation
-function appendMessage(text,type='lambo',save=true){
-  let msg=document.createElement('div');
-  msg.className='message '+type;
-  msg.innerHTML=text;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = model.instructions;
+        input.value = getAPIKey(model.name.toLowerCase()) || '';
+        input.addEventListener('change', e => saveAPIKey(model.name.toLowerCase(), e.target.value.trim()));
 
-  // Controls for delete & resend
-  let controls=document.createElement('div');
-  controls.className='message-controls';
-  let delBtn=document.createElement('button'); delBtn.textContent='✖';
-  let resendBtn=document.createElement('button'); resendBtn.textContent='↻';
-  delBtn.onclick=(e)=>{
-    e.stopPropagation();
-    msg.remove();
-    if(save) HISTORY = HISTORY.filter(m=>!(m.id===msg.dataset.id));
-    localStorage.setItem(LS.history,JSON.stringify(HISTORY));
-  };
-  resendBtn.onclick=(e)=>{
-    e.stopPropagation();
-    if(type==='user') qEl.value=text; sendMessage();
-  };
-  controls.appendChild(delBtn);
-  if(type==='user') controls.appendChild(resendBtn);
-  msg.appendChild(controls);
-
-  // Assign unique ID for history
-  if(save){
-    let id=Date.now()+'_'+Math.random().toString(36).substr(2,5);
-    msg.dataset.id=id;
-    HISTORY.push({id,text,type});
-    localStorage.setItem(LS.history,JSON.stringify(HISTORY));
-  }
-
-  chatArea.appendChild(msg);
-  chatArea.scrollTop = chatArea.scrollHeight;
-  return msg;
+        div.appendChild(label);
+        div.appendChild(input);
+        apiKeysContainer.appendChild(div);
+    });
 }
 
-function setLamboThinking(state){
-  document.getElementById('logo').style.animation=state?'logoThink 3s infinite':'logoIdle 6s ease-in-out infinite';
-}
+// Load settings
+multiAICheck.checked = getMultiAIMode();
+smartSumCheck.checked = getSmartSummarization();
 
-async function sendMessage(){
-  let text=qEl.value.trim();
-  if(!text) return;
-  appendMessage(text,'user');
-  qEl.value='';
+// Save toggle changes
+multiAICheck.addEventListener('change', e => setMultiAIMode(e.target.checked));
+smartSumCheck.addEventListener('change', e => setSmartSummarization(e.target.checked));
 
-  if(!API_KEY){
-    appendMessage('Hey! I need your Gemini API Key to chat. Type it here and send it. 🔐','lambo');
-    API_KEY = text;
-    localStorage.setItem(LS.apiKey,API_KEY);
-    appendMessage('Thanks! API Key saved ✨','lambo');
-    return;
-  }
+renderAPIKeyInputs();
 
-  // Typing indicator
-  let typingMsg=appendMessage('<span class="typingCursor"></span>','lambo',false);
-  setLamboThinking(true);
-
-  try{
-    const endpoint=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
-    const body={contents:[{parts:[{text:`You are Lambo, a friendly AI cat. Answer concisely for a mobile user. User: ${text}`}]}]};
-    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const data=await res.json();
-    let reply=data?.candidates?.[0]?.content?.parts?.[0]?.text||'Lambo had no reply 😿';
-    typingMsg.remove();
-    appendMessage(reply,'lambo');
-  }catch(err){
-    typingMsg.remove();
-    appendMessage('Lambo failed — check API key/network. ❌','lambo');
-  } finally{
-    setLamboThinking(false);
-  }
-}
+// Render chat history on load
+renderChatHistory();
 </script>
+
 </body>
 </html>
