@@ -1,72 +1,94 @@
-// LocalStorage keys
+/* ===============================
+   Lambo AI – Local Storage Layer
+   =============================== */
+
 const STORAGE_KEYS = {
-    apiKeys: "LAMBO_API_KEYS",           // Object {chatgpt: key, gemini: key, ...}
-    chatHistory: "LAMBO_CHAT_HISTORY",   // Array of messages {type, text, model, timestamp}
-    multiAIMode: "LAMBO_MULTI_AI",
-    smartSummarization: "LAMBO_SMART_SUM"
+  SETTINGS: "lambo_settings",
+  HISTORY: "lambo_chat_history",
+  API_KEYS: "lambo_api_keys"
 };
 
-// ---------- API Key Functions ----------
-function saveAPIKey(modelKey, apiKey) {
-    const keys = JSON.parse(localStorage.getItem(STORAGE_KEYS.apiKeys) || "{}");
-    keys[modelKey] = apiKey;
-    localStorage.setItem(STORAGE_KEYS.apiKeys, JSON.stringify(keys));
+/* ---------- Default Settings ---------- */
+const DEFAULT_SETTINGS = {
+  themeColor: "blue",               // future-ready (Material dynamic)
+  activeModels: ["gemini"],          // gemini | gpt | claude
+  multiModelMode: false,             // use all models together
+  responseStyle: "fun",              // fun | simple | best
+  showTypingAnimation: true,
+};
+
+/* ---------- Settings ---------- */
+export function getSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS));
+    return { ...DEFAULT_SETTINGS, ...saved };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
 }
 
-function getAPIKey(modelKey) {
-    const keys = JSON.parse(localStorage.getItem(STORAGE_KEYS.apiKeys) || "{}");
-    return keys[modelKey] || "";
+export function saveSettings(settings) {
+  localStorage.setItem(
+    STORAGE_KEYS.SETTINGS,
+    JSON.stringify({ ...getSettings(), ...settings })
+  );
 }
 
-function removeAPIKey(modelKey) {
-    const keys = JSON.parse(localStorage.getItem(STORAGE_KEYS.apiKeys) || "{}");
-    delete keys[modelKey];
-    localStorage.setItem(STORAGE_KEYS.apiKeys, JSON.stringify(keys));
+export function resetSettings() {
+  localStorage.setItem(
+    STORAGE_KEYS.SETTINGS,
+    JSON.stringify(DEFAULT_SETTINGS)
+  );
 }
 
-// ---------- Chat History Functions ----------
-function saveMessage(type, text, model="User") {
-    const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.chatHistory) || "[]");
-    history.push({
-        type,        // 'user' or 'ai'
-        text,
-        model,
-        timestamp: Date.now()
-    });
-    // Keep max 200 messages
-    if (history.length > 200) history.splice(0, history.length - 200);
-    localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(history));
+/* ---------- API Keys ---------- */
+export function getApiKeys() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.API_KEYS)) || {};
+  } catch {
+    return {};
+  }
 }
 
-function loadHistory() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.chatHistory) || "[]");
+export function saveApiKey(model, key) {
+  const keys = getApiKeys();
+  keys[model] = key;
+  localStorage.setItem(STORAGE_KEYS.API_KEYS, JSON.stringify(keys));
 }
 
-function clearHistory() {
-    localStorage.removeItem(STORAGE_KEYS.chatHistory);
+export function clearApiKeys() {
+  localStorage.removeItem(STORAGE_KEYS.API_KEYS);
 }
 
-// ---------- Multi-AI & Smart Summarization ----------
-function setMultiAIMode(enabled) {
-    localStorage.setItem(STORAGE_KEYS.multiAIMode, JSON.stringify(enabled));
+/* ---------- Chat History ---------- */
+export function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY)) || [];
+  } catch {
+    return [];
+  }
 }
 
-function getMultiAIMode() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.multiAIMode) || "false");
+export function addMessage(role, content) {
+  const history = getHistory();
+  history.push({
+    role,               // "user" | "lambo"
+    content,
+    time: Date.now()
+  });
+  localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
 }
 
-function setSmartSummarization(enabled) {
-    localStorage.setItem(STORAGE_KEYS.smartSummarization, JSON.stringify(enabled));
+export function clearHistory() {
+  localStorage.removeItem(STORAGE_KEYS.HISTORY);
 }
 
-function getSmartSummarization() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.smartSummarization) || "false");
+/* ---------- Utilities ---------- */
+export function hasApiKeyFor(model) {
+  const keys = getApiKeys();
+  return Boolean(keys[model]);
 }
 
-// ---------- Export functions if using modules ----------
-// export {
-//     saveAPIKey, getAPIKey, removeAPIKey,
-//     saveMessage, loadHistory, clearHistory,
-//     setMultiAIMode, getMultiAIMode,
-//     setSmartSummarization, getSmartSummarization
-// };
+export function isFirstRun() {
+  return !localStorage.getItem(STORAGE_KEYS.SETTINGS);
+}
