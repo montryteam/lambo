@@ -1,65 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lambo AI Chat</title>
-
-  <!-- Material Icons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/material3.css">
-  <link rel="stylesheet" href="css/chat.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambo AI Chat</title>
+<link rel="stylesheet" href="css/material3.css">
+<link rel="stylesheet" href="css/chat.css">
 </head>
-
 <body>
+<div class="chat-app">
+  <!-- Header -->
+  <div class="chat-header">
+    <h1 class="chat-title">Lambo</h1>
+    <p class="chat-subtitle">Your playful AI friend 🐱</p>
+  </div>
 
-  <!-- App Header -->
-  <header class="app-header">
-    <div class="app-title">
-      <span class="logo">LAMBO</span>
-      <span class="subtitle">your smart AI cat 🐱</span>
-    </div>
-    <button class="icon-btn" id="openSettings">
-      <span class="material-icons">settings</span>
-    </button>
-  </header>
+  <!-- Messages -->
+  <div class="chat-messages" id="chatContainer"></div>
 
-  <!-- Chat Container -->
-  <main class="chat-container" id="chatContainer">
-
-    <!-- Lambo Message -->
-    <div class="message lambo">
-      <div class="bubble">
-        Hey hey 👋  
-        I’m <strong>Lambo</strong>, your smart AI cat 🐱  
-        Pick a model in settings and let’s chat ✨
-      </div>
-    </div>
-
-  </main>
-
-  <!-- Typing Indicator -->
-  <div class="typing-indicator" id="typingIndicator">
+  <!-- Typing -->
+  <div class="typing" id="typingIndicator" style="display:none;">
     <span></span><span></span><span></span>
   </div>
 
-  <!-- Input Bar -->
-  <footer class="input-bar">
-    <input
-      type="text"
-      id="userInput"
-      placeholder="Message Lambo..."
-      autocomplete="off"
-    />
-    <button id="sendBtn" class="send-btn">
-      <span class="material-icons">send</span>
-    </button>
-  </footer>
+  <!-- Input -->
+  <div class="chat-input">
+    <input id="userInput" type="text" placeholder="Ask Lambo anything..." />
+    <button class="send-btn" id="sendBtn">➤</button>
+  </div>
 
-  <!-- Scripts -->
-  <script type="module" src="js/main.js"></script>
+  <!-- Floating Settings Button -->
+  <button id="openSettings" class="icon-btn" style="position:fixed; bottom:20px; right:20px;">⚙️</button>
+</div>
 
+<script type="module">
+// ---------------- Module Imports ----------------
+import { initChat } from './js/ui.js';
+import { getSettings, saveSettings, resetSettings, saveApiKey, getApiKeys } from './js/storage.js';
+
+// ---------------- Settings Popup ----------------
+function createSettingsPopup() {
+  const popup = document.createElement('div');
+  popup.id = 'settingsPopup';
+  popup.style.position = 'fixed';
+  popup.style.top = '0';
+  popup.style.left = '0';
+  popup.style.width = '100%';
+  popup.style.height = '100%';
+  popup.style.background = 'rgba(0,0,0,0.75)';
+  popup.style.display = 'flex';
+  popup.style.justifyContent = 'center';
+  popup.style.alignItems = 'center';
+  popup.style.zIndex = '999';
+  popup.innerHTML = `
+    <div style="background:#12182a;padding:20px;border-radius:24px;width:90%;max-width:360px;">
+      <h3 style="margin-bottom:12px;">Settings ⚙️</h3>
+
+      <div style="margin-bottom:12px;">
+        <label>Enter API Keys 🗝️</label><br/>
+        <input id="apiGemini" type="text" placeholder="Gemini API Key" style="width:100%;margin-top:4px;"/><br/>
+        <small style="color:#9aa4d6;">Get it from <a href="https://studio.google.com/" target="_blank">Google AI Studio</a></small><br/><br/>
+
+        <input id="apiGPT" type="text" placeholder="ChatGPT API Key" style="width:100%;margin-top:4px;"/><br/>
+        <small style="color:#9aa4d6;">Get it from <a href="https://platform.openai.com/account/api-keys" target="_blank">OpenAI Dashboard</a></small><br/><br/>
+
+        <input id="apiClaude" type="text" placeholder="Claude API Key" style="width:100%;margin-top:4px;"/><br/>
+        <small style="color:#9aa4d6;">Get it from <a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a></small>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label>Select Active Models:</label><br/>
+        <input type="checkbox" id="modelGemini" /> Gemini 🧠<br/>
+        <input type="checkbox" id="modelGPT" /> ChatGPT ✨<br/>
+        <input type="checkbox" id="modelClaude" /> Claude 🪄
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label>Multi-Model Mode:</label>
+        <input type="checkbox" id="multiModel" />
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <button id="saveSettingsBtn" style="margin-right:10px;">💾 Save</button>
+        <button id="resetSettingsBtn">🔄 Reset</button>
+      </div>
+
+      <button id="closeSettingsBtn" style="margin-top:10px;">Close ❌</button>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  // Load current settings
+  const settings = getSettings();
+  const keys = getApiKeys();
+
+  document.getElementById("modelGemini").checked = settings.activeModels.includes("gemini");
+  document.getElementById("modelGPT").checked = settings.activeModels.includes("gpt");
+  document.getElementById("modelClaude").checked = settings.activeModels.includes("claude");
+  document.getElementById("multiModel").checked = settings.multiModelMode;
+
+  document.getElementById("apiGemini").value = keys.gemini || "";
+  document.getElementById("apiGPT").value = keys.gpt || "";
+  document.getElementById("apiClaude").value = keys.claude || "";
+
+  // Event Listeners
+  document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+    saveApiKey("gemini", document.getElementById("apiGemini").value);
+    saveApiKey("gpt", document.getElementById("apiGPT").value);
+    saveApiKey("claude", document.getElementById("apiClaude").value);
+
+    const newSettings = {
+      activeModels: [
+        document.getElementById("modelGemini").checked ? "gemini" : null,
+        document.getElementById("modelGPT").checked ? "gpt" : null,
+        document.getElementById("modelClaude").checked ? "claude" : null
+      ].filter(Boolean),
+      multiModelMode: document.getElementById("multiModel").checked
+    };
+    saveSettings(newSettings);
+    alert("✅ Settings saved!");
+    closeSettingsPopup();
+  });
+
+  document.getElementById("resetSettingsBtn").addEventListener("click", () => {
+    resetSettings();
+    alert("🔄 Settings reset to default");
+    closeSettingsPopup();
+  });
+
+  document.getElementById("closeSettingsBtn").addEventListener("click", closeSettingsPopup);
+}
+
+function closeSettingsPopup() {
+  const popup = document.getElementById("settingsPopup");
+  if (popup) popup.remove();
+}
+
+// Open settings button
+document.getElementById("openSettings").addEventListener("click", createSettingsPopup);
+
+// Initialize Chat
+document.addEventListener("DOMContentLoaded", () => {
+  initChat();
+});
+</script>
 </body>
 </html>
