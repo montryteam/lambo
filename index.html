@@ -1,118 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo AI Chat</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lambo AI Chat</title>
 
-<!-- Material 3 & Custom Styles -->
-<link rel="stylesheet" href="css/material3.css">
-<link rel="stylesheet" href="css/chat.css">
-<link rel="stylesheet" href="css/settings.css">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/material3.css">
+  <link rel="stylesheet" href="css/chat.css">
 </head>
+
 <body>
 
-<!-- Chat Area -->
-<div id="chatArea" class="chatArea"></div>
-
-<!-- Input Row -->
-<div class="inputCard">
-    <div class="inputRow">
-        <input type="text" id="chatInput" placeholder="Ask Lambo... ✨" />
-        <button id="sendBtn" class="sendBtn">Send</button>
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="app-title">
+      <span class="logo">LAMBO</span>
+      <span class="subtitle">your smart AI cat 🐱</span>
     </div>
-</div>
+    <button class="icon-btn" id="openSettings">
+      <span class="material-icons">settings</span>
+    </button>
+  </header>
 
-<!-- Floating Settings Button -->
-<button id="settingsBtn" class="settingsFloat" title="Settings ⚙">⚙</button>
+  <!-- Chat Container -->
+  <main class="chat-container" id="chatContainer">
 
-<!-- Settings Overlay -->
-<div id="settingsOverlay" class="settingsOverlay">
-    <div class="settingsBox">
-        <h2>Settings ⚡</h2>
-
-        <!-- API Keys -->
-        <div class="label">API Keys 🔑</div>
-        <div id="apiKeysContainer"></div>
-
-        <!-- Multi-AI Mode -->
-        <div class="toggleRow">
-            <label>Enable Multi-AI Responses</label>
-            <input type="checkbox" id="multiAIMode" />
-        </div>
-
-        <!-- Smart Summarization -->
-        <div class="toggleRow">
-            <label>Smart Summarization</label>
-            <input type="checkbox" id="smartSummarization" />
-        </div>
-
-        <!-- Close & Save -->
-        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
-            <button id="closeSettingsBtn">Close</button>
-        </div>
+    <!-- Lambo Message -->
+    <div class="message lambo">
+      <div class="bubble">
+        Hey hey 👋  
+        I’m <strong>Lambo</strong>, your smart AI cat 🐱  
+        Pick a model in settings and let’s chat ✨
+      </div>
     </div>
-</div>
 
-<!-- JS Modules -->
-<script src="js/storage.js"></script>
-<script src="js/aiModels.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/main.js"></script>
+  </main>
 
-<script>
-/* ---------- Settings Overlay Logic ---------- */
-const settingsBtn = document.getElementById('settingsBtn');
-const overlay = document.getElementById('settingsOverlay');
-const closeBtn = document.getElementById('closeSettingsBtn');
-const apiKeysContainer = document.getElementById('apiKeysContainer');
-const multiAICheck = document.getElementById('multiAIMode');
-const smartSumCheck = document.getElementById('smartSummarization');
+  <!-- Typing Indicator -->
+  <div class="typing-indicator" id="typingIndicator">
+    <span></span><span></span><span></span>
+  </div>
 
-// Show/Hide settings
-settingsBtn.addEventListener('click', () => overlay.style.display = 'flex');
-closeBtn.addEventListener('click', () => overlay.style.display = 'none');
+  <!-- Input Bar -->
+  <footer class="input-bar">
+    <input
+      type="text"
+      id="userInput"
+      placeholder="Message Lambo..."
+      autocomplete="off"
+    />
+    <button id="sendBtn" class="send-btn">
+      <span class="material-icons">send</span>
+    </button>
+  </footer>
 
-// Populate API Key Inputs
-function renderAPIKeyInputs() {
-    apiKeysContainer.innerHTML = '';
-    getAvailableModels().forEach(model => {
-        const div = document.createElement('div');
-        div.style.display = 'flex';
-        div.style.flexDirection = 'column';
-        div.style.marginBottom = '8px';
-
-        const label = document.createElement('label');
-        label.textContent = `${model.name} API Key`;
-        label.style.fontSize = '12px';
-        label.style.marginBottom = '4px';
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = model.instructions;
-        input.value = getAPIKey(model.name.toLowerCase()) || '';
-        input.addEventListener('change', e => saveAPIKey(model.name.toLowerCase(), e.target.value.trim()));
-
-        div.appendChild(label);
-        div.appendChild(input);
-        apiKeysContainer.appendChild(div);
-    });
-}
-
-// Load settings
-multiAICheck.checked = getMultiAIMode();
-smartSumCheck.checked = getSmartSummarization();
-
-// Save toggle changes
-multiAICheck.addEventListener('change', e => setMultiAIMode(e.target.checked));
-smartSumCheck.addEventListener('change', e => setSmartSummarization(e.target.checked));
-
-renderAPIKeyInputs();
-
-// Render chat history on load
-renderChatHistory();
-</script>
+  <!-- Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/aiModels.js"></script>
+  <script src="js/main.js"></script>
 
 </body>
 </html>
