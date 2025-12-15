@@ -5,144 +5,299 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lambo AI Chat</title>
 <link rel="stylesheet" href="css/material3.css">
-<link rel="stylesheet" href="css/chat.css">
+<style>
+:root {
+  --bg: #000;
+  --surface: #111;
+  --surface-light: #222;
+  --white: #fff;
+  --radius: 28px;
+  --shadow: 0 10px 30px rgba(0,0,0,0.7);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Roboto',sans-serif; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+  padding:18px;
+  overflow-x:hidden;
+}
+
+h1.chat-title {
+  font-size:2.6rem;
+  background: linear-gradient(90deg, #6a5acd, #00bfff);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientFlow 8s ease infinite;
+  text-align:center;
+}
+
+@keyframes gradientFlow {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+p.chat-subtitle {
+  text-align:center;
+  margin-bottom:12px;
+  color:#ccc;
+  font-size:1rem;
+}
+
+.chat-app {
+  width:100%;
+  max-width:480px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.chat-messages {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding:12px;
+  min-height:300px;
+  max-height:60vh;
+  overflow-y:auto;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.message {
+  margin:8px 0;
+  display:flex;
+}
+
+.message.user .bubble {
+  background: var(--white);
+  color:#000;
+  margin-left:auto;
+  border-radius: var(--radius);
+  padding:12px;
+  max-width:75%;
+  animation: appear 0.3s ease;
+}
+
+.message.lambo .bubble {
+  background: rgba(70,130,180,0.9);
+  color:var(--white);
+  border-radius: var(--radius);
+  padding:12px;
+  max-width:75%;
+  animation: appear 0.3s ease;
+}
+
+@keyframes appear { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+
+.typing {
+  display:flex;
+  gap:4px;
+  margin:8px 0;
+  justify-content:flex-start;
+}
+
+.typing span {
+  width:8px; height:8px;
+  background:#fff;
+  border-radius:50%;
+  animation: bounce 0.6s infinite alternate;
+}
+
+.typing span:nth-child(2){animation-delay:0.2s;}
+.typing span:nth-child(3){animation-delay:0.4s;}
+
+@keyframes bounce { from{transform:translateY(0);} to{transform:translateY(-8px);} }
+
+.chat-input {
+  display:flex;
+  gap:8px;
+}
+
+.chat-input input {
+  flex:1;
+  padding:14px;
+  border-radius: var(--radius);
+  border:none;
+  background: var(--surface-light);
+  color:var(--white);
+}
+
+.chat-input button {
+  padding:14px 20px;
+  border-radius: var(--radius);
+  border:none;
+  background: var(--white);
+  color:#000;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow: var(--shadow);
+}
+
+.icon-btn {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  background: #fff;
+  color:#000;
+  font-size:22px;
+  font-weight:900;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  box-shadow: var(--shadow);
+  z-index:1000;
+}
+
+/* Settings popup */
+#settingsPopup {
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.75);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
+
+#settingsPopup .popup-inner {
+  background: rgba(30,30,50,0.95);
+  padding:20px;
+  border-radius:24px;
+  width:90%; max-width:360px;
+  backdrop-filter: blur(8px);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  color:#fff;
+}
+
+#settingsPopup input[type=text] {
+  padding:10px;
+  border-radius: var(--radius);
+  border:none;
+  width:100%;
+  background: rgba(255,255,255,0.1);
+  color:#fff;
+}
+
+#settingsPopup button {
+  padding:10px;
+  border-radius: var(--radius);
+  border:none;
+  cursor:pointer;
+  font-weight:700;
+}
+</style>
 </head>
 <body>
 <div class="chat-app">
-  <!-- Header -->
-  <div class="chat-header">
-    <h1 class="chat-title">Lambo</h1>
-    <p class="chat-subtitle">Your playful AI friend 🐱</p>
-  </div>
+  <h1 class="chat-title">Lambo</h1>
+  <p class="chat-subtitle">Your playful AI friend 🐱</p>
 
-  <!-- Messages -->
   <div class="chat-messages" id="chatContainer"></div>
-
-  <!-- Typing -->
   <div class="typing" id="typingIndicator" style="display:none;">
     <span></span><span></span><span></span>
   </div>
 
-  <!-- Input -->
   <div class="chat-input">
-    <input id="userInput" type="text" placeholder="Ask Lambo anything..." />
-    <button class="send-btn" id="sendBtn">➤</button>
+    <input id="userInput" type="text" placeholder="Ask Lambo anything..."/>
+    <button id="sendBtn">➤</button>
   </div>
 
-  <!-- Floating Settings Button -->
-  <button id="openSettings" class="icon-btn" style="position:fixed; bottom:20px; right:20px;">⚙️</button>
+  <button id="openSettings" class="icon-btn">⚙️</button>
 </div>
 
 <script type="module">
-// ---------------- Module Imports ----------------
 import { initChat } from './js/ui.js';
 import { getSettings, saveSettings, resetSettings, saveApiKey, getApiKeys } from './js/storage.js';
 
-// ---------------- Settings Popup ----------------
-function createSettingsPopup() {
+function createSettingsPopup(){
   const popup = document.createElement('div');
-  popup.id = 'settingsPopup';
-  popup.style.position = 'fixed';
-  popup.style.top = '0';
-  popup.style.left = '0';
-  popup.style.width = '100%';
-  popup.style.height = '100%';
-  popup.style.background = 'rgba(0,0,0,0.75)';
-  popup.style.display = 'flex';
-  popup.style.justifyContent = 'center';
-  popup.style.alignItems = 'center';
-  popup.style.zIndex = '999';
-  popup.innerHTML = `
-    <div style="background:#12182a;padding:20px;border-radius:24px;width:90%;max-width:360px;">
-      <h3 style="margin-bottom:12px;">Settings ⚙️</h3>
+  popup.id='settingsPopup';
+  popup.innerHTML=`
+  <div class="popup-inner">
+    <h3>Settings ⚙️</h3>
+    <label>Enter API Keys 🗝️</label>
+    <input id="apiGemini" type="text" placeholder="Gemini API Key">
+    <small>Get it from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a></small>
+    <input id="apiGPT" type="text" placeholder="ChatGPT API Key">
+    <small>Get it from <a href="https://platform.openai.com/account/api-keys" target="_blank">OpenAI Dashboard</a></small>
+    <input id="apiClaude" type="text" placeholder="Claude API Key">
+    <small>Get it from <a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a></small>
 
-      <div style="margin-bottom:12px;">
-        <label>Enter API Keys 🗝️</label><br/>
-        <input id="apiGemini" type="text" placeholder="Gemini API Key" style="width:100%;margin-top:4px;"/><br/>
-        <small style="color:#9aa4d6;">Get it from <a href="https://studio.google.com/" target="_blank">Google AI Studio</a></small><br/><br/>
+    <label>Select Active Models:</label>
+    <input type="checkbox" id="modelGemini"> Gemini 🧠
+    <input type="checkbox" id="modelGPT"> ChatGPT ✨
+    <input type="checkbox" id="modelClaude"> Claude 🪄
 
-        <input id="apiGPT" type="text" placeholder="ChatGPT API Key" style="width:100%;margin-top:4px;"/><br/>
-        <small style="color:#9aa4d6;">Get it from <a href="https://platform.openai.com/account/api-keys" target="_blank">OpenAI Dashboard</a></small><br/><br/>
+    <label>Multi-Model Mode:</label>
+    <input type="checkbox" id="multiModel">
 
-        <input id="apiClaude" type="text" placeholder="Claude API Key" style="width:100%;margin-top:4px;"/><br/>
-        <small style="color:#9aa4d6;">Get it from <a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a></small>
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <label>Select Active Models:</label><br/>
-        <input type="checkbox" id="modelGemini" /> Gemini 🧠<br/>
-        <input type="checkbox" id="modelGPT" /> ChatGPT ✨<br/>
-        <input type="checkbox" id="modelClaude" /> Claude 🪄
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <label>Multi-Model Mode:</label>
-        <input type="checkbox" id="multiModel" />
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <button id="saveSettingsBtn" style="margin-right:10px;">💾 Save</button>
-        <button id="resetSettingsBtn">🔄 Reset</button>
-      </div>
-
-      <button id="closeSettingsBtn" style="margin-top:10px;">Close ❌</button>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button id="saveSettingsBtn">💾 Save</button>
+      <button id="resetSettingsBtn">🔄 Reset</button>
     </div>
+    <button id="closeSettingsBtn" style="margin-top:10px;">Close ❌</button>
+  </div>
   `;
   document.body.appendChild(popup);
 
-  // Load current settings
-  const settings = getSettings();
-  const keys = getApiKeys();
+  const keys=getApiKeys();
+  document.getElementById("apiGemini").value=keys.gemini||"";
+  document.getElementById("apiGPT").value=keys.gpt||"";
+  document.getElementById("apiClaude").value=keys.claude||"";
 
-  document.getElementById("modelGemini").checked = settings.activeModels.includes("gemini");
-  document.getElementById("modelGPT").checked = settings.activeModels.includes("gpt");
-  document.getElementById("modelClaude").checked = settings.activeModels.includes("claude");
-  document.getElementById("multiModel").checked = settings.multiModelMode;
+  const settings=getSettings();
+  document.getElementById("modelGemini").checked=settings.activeModels.includes("gemini");
+  document.getElementById("modelGPT").checked=settings.activeModels.includes("gpt");
+  document.getElementById("modelClaude").checked=settings.activeModels.includes("claude");
+  document.getElementById("multiModel").checked=settings.multiModelMode;
 
-  document.getElementById("apiGemini").value = keys.gemini || "";
-  document.getElementById("apiGPT").value = keys.gpt || "";
-  document.getElementById("apiClaude").value = keys.claude || "";
+  document.getElementById("saveSettingsBtn").addEventListener("click",()=>{
+    saveApiKey("gemini",document.getElementById("apiGemini").value);
+    saveApiKey("gpt",document.getElementById("apiGPT").value);
+    saveApiKey("claude",document.getElementById("apiClaude").value);
 
-  // Event Listeners
-  document.getElementById("saveSettingsBtn").addEventListener("click", () => {
-    saveApiKey("gemini", document.getElementById("apiGemini").value);
-    saveApiKey("gpt", document.getElementById("apiGPT").value);
-    saveApiKey("claude", document.getElementById("apiClaude").value);
-
-    const newSettings = {
-      activeModels: [
-        document.getElementById("modelGemini").checked ? "gemini" : null,
-        document.getElementById("modelGPT").checked ? "gpt" : null,
-        document.getElementById("modelClaude").checked ? "claude" : null
+    saveSettings({
+      activeModels:[
+        document.getElementById("modelGemini").checked?"gemini":null,
+        document.getElementById("modelGPT").checked?"gpt":null,
+        document.getElementById("modelClaude").checked?"claude":null
       ].filter(Boolean),
-      multiModelMode: document.getElementById("multiModel").checked
-    };
-    saveSettings(newSettings);
+      multiModelMode:document.getElementById("multiModel").checked
+    });
     alert("✅ Settings saved!");
     closeSettingsPopup();
   });
 
-  document.getElementById("resetSettingsBtn").addEventListener("click", () => {
+  document.getElementById("resetSettingsBtn").addEventListener("click",()=>{
     resetSettings();
     alert("🔄 Settings reset to default");
     closeSettingsPopup();
   });
 
-  document.getElementById("closeSettingsBtn").addEventListener("click", closeSettingsPopup);
+  document.getElementById("closeSettingsBtn").addEventListener("click",closeSettingsPopup);
 }
 
-function closeSettingsPopup() {
-  const popup = document.getElementById("settingsPopup");
-  if (popup) popup.remove();
+function closeSettingsPopup(){
+  const popup=document.getElementById('settingsPopup');
+  if(popup) popup.remove();
 }
 
-// Open settings button
-document.getElementById("openSettings").addEventListener("click", createSettingsPopup);
-
-// Initialize Chat
-document.addEventListener("DOMContentLoaded", () => {
-  initChat();
-});
+document.getElementById("openSettings").addEventListener("click",createSettingsPopup);
+document.addEventListener("DOMContentLoaded",()=>{ initChat(); });
 </script>
 </body>
 </html>
