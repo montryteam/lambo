@@ -1,115 +1,91 @@
-// Elements
-const chatArea = document.getElementById('chatArea');
-const inputEl = document.getElementById('chatInput');
-const sendBtn = document.getElementById('sendBtn');
-const settingsBtn = document.getElementById('settingsBtn');
-const overlay = document.getElementById('settingsOverlay');
+/* =======================================
+   Lambo AI – Main App Logic
+   ======================================= */
 
-// Load settings
-let selectedModels = JSON.parse(localStorage.getItem('selectedModels') || '["chatgpt"]');
-let multiAIMode = JSON.parse(localStorage.getItem('multiAIMode') || 'false');
-let smartSummarization = JSON.parse(localStorage.getItem('smartSummarization') || 'false');
+import { initChat } from "./ui.js";
+import { getSettings, saveSettings, resetSettings } from "./storage.js";
 
-// Send message
-sendBtn.addEventListener('click', sendMessage);
-inputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter') sendMessage();
+/* ---------- DOM Elements ---------- */
+const openSettingsBtn = document.getElementById("openSettings");
+
+/* ---------- Settings Popup ---------- */
+function createSettingsPopup() {
+  const popup = document.createElement("div");
+  popup.id = "settingsPopup";
+  popup.style.position = "fixed";
+  popup.style.top = "0";
+  popup.style.left = "0";
+  popup.style.width = "100%";
+  popup.style.height = "100%";
+  popup.style.background = "rgba(0,0,0,0.75)";
+  popup.style.display = "flex";
+  popup.style.justifyContent = "center";
+  popup.style.alignItems = "center";
+  popup.style.zIndex = "999";
+  popup.innerHTML = `
+    <div style="background: #12182a; padding: 20px; border-radius: 24px; width: 90%; max-width: 360px;">
+      <h3 style="margin-bottom: 12px;">Settings ⚙️</h3>
+      <div style="margin-bottom:12px;">
+        <label>Select Active Models:</label><br/>
+        <input type="checkbox" id="modelGemini" /> Gemini 🧠<br/>
+        <input type="checkbox" id="modelGPT" /> ChatGPT ✨<br/>
+        <input type="checkbox" id="modelClaude" /> Claude 🪄
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>Multi-Model Mode:</label>
+        <input type="checkbox" id="multiModel" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <button id="saveSettingsBtn" style="margin-right:10px;">💾 Save</button>
+        <button id="resetSettingsBtn">🔄 Reset</button>
+      </div>
+      <button id="closeSettingsBtn" style="margin-top:10px;">Close ❌</button>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  // Load current settings
+  const settings = getSettings();
+  document.getElementById("modelGemini").checked = settings.activeModels.includes("gemini");
+  document.getElementById("modelGPT").checked = settings.activeModels.includes("gpt");
+  document.getElementById("modelClaude").checked = settings.activeModels.includes("claude");
+  document.getElementById("multiModel").checked = settings.multiModelMode;
+
+  // Event Listeners
+  document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+    const newSettings = {
+      activeModels: [
+        document.getElementById("modelGemini").checked ? "gemini" : null,
+        document.getElementById("modelGPT").checked ? "gpt" : null,
+        document.getElementById("modelClaude").checked ? "claude" : null
+      ].filter(Boolean),
+      multiModelMode: document.getElementById("multiModel").checked
+    };
+    saveSettings(newSettings);
+    alert("✅ Settings saved!");
+    closeSettingsPopup();
+  });
+
+  document.getElementById("resetSettingsBtn").addEventListener("click", () => {
+    resetSettings();
+    alert("🔄 Settings reset to default");
+    closeSettingsPopup();
+  });
+
+  document.getElementById("closeSettingsBtn").addEventListener("click", closeSettingsPopup);
+}
+
+function closeSettingsPopup() {
+  const popup = document.getElementById("settingsPopup");
+  if (popup) popup.remove();
+}
+
+/* ---------- Open Settings ---------- */
+openSettingsBtn.addEventListener("click", () => {
+  createSettingsPopup();
 });
 
-async function sendMessage() {
-    const message = inputEl.value.trim();
-    if (!message) return;
-
-    // Show user message
-    appendMessage('user', message);
-
-    // Save to history
-    saveMessage('user', message);
-
-    inputEl.value = '';
-    
-    // Determine which models to query
-    let modelsToQuery = selectedModels;
-    if (!multiAIMode) modelsToQuery = [selectedModels[0]]; // Only first model if multiAI off
-
-    // Show typing indicator
-    const typingEl = appendTypingIndicator();
-
-    // Collect responses
-    const responses = [];
-    for (let modelKey of modelsToQuery) {
-        const model = getModel(modelKey);
-        const apiKey = getAPIKey(modelKey);
-        if (!apiKey) {
-            removeTypingIndicator(typingEl);
-            appendMessage('ai', `No API key provided for ${model.name}. ${model.instructions}`);
-            continue;
-        }
-
-        try {
-            const aiResponse = await fetchAIResponse(modelKey, apiKey, message);
-            responses.push({model: model.name, text: aiResponse});
-        } catch (err) {
-            responses.push({model: model.name, text: `Error: ${err.message}`});
-        }
-    }
-
-    // Remove typing indicator
-    removeTypingIndicator(typingEl);
-
-    // Process responses
-    if (responses.length === 1 || !multiAIMode) {
-        appendMessage('ai', responses[0].text, responses[0].model);
-    } else {
-        let finalText = '';
-        if (smartSummarization) {
-            // Simple concatenation for demo; replace with actual summarization API if desired
-            finalText = responses.map(r => `${r.model}: ${r.text}`).join('\n\n');
-        } else {
-            // Best response = first for now
-            finalText = `${responses[0].text}\n\nAnswer compiled from: ${responses.map(r => r.model).join(', ')}`;
-        }
-        appendMessage('ai', finalText, 'Multi-AI');
-    }
-
-    // Save AI responses to history
-    responses.forEach(r => saveMessage('ai', r.text, r.model));
-}
-
-// Fetch AI response (simplified; adapt per AI model API)
-async function fetchAIResponse(modelKey, apiKey, prompt) {
-    const model = getModel(modelKey);
-
-    if (modelKey === 'chatgpt') {
-        const res = await fetch(model.endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                model: 'gpt-4',
-                messages: [{role: 'user', content: prompt}]
-            })
-        });
-        const data = await res.json();
-        return data.choices[0].message.content;
-    } else if (modelKey === 'gemini') {
-        const endpoint = `${model.endpoint}?key=${apiKey}`;
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents:[{parts:[{text: prompt}]}]
-            })
-        });
-        const data = await res.json();
-        return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No reply';
-    } else {
-        // Placeholder for other AIs
-        return `[Simulated response for ${model.name}] ${prompt}`;
-    }
-}
-
-// UI helper functions from ui.js
-// appendMessage(type, text, model?)
-// appendTypingIndicator()
-// removeTypingIndicator(el)
-// saveMessage(type, text, model?)
+/* ---------- Initialize Chat ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  initChat();
+});
