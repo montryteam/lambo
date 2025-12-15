@@ -1,77 +1,84 @@
-// ---------- Append a message to chat ----------
-function appendMessage(type, text, model = "User") {
-    const msgEl = document.createElement('div');
-    msgEl.classList.add('message', type);
-    
-    // Show model name for AI messages
-    if (type === 'ai') {
-        const modelEl = document.createElement('div');
-        modelEl.textContent = model;
-        modelEl.style.fontSize = '11px';
-        modelEl.style.fontWeight = '600';
-        modelEl.style.marginBottom = '4px';
-        msgEl.appendChild(modelEl);
-    }
+/* =======================================
+   Lambo AI – UI Rendering & Animations
+   ======================================= */
 
-    const textEl = document.createElement('div');
-    textEl.textContent = text;
-    msgEl.appendChild(textEl);
+import { getHistory, addMessage } from "./storage.js";
+import { fuseResponses, callModel } from "./aiModels.js";
 
-    // Add message controls
-    const controls = document.createElement('div');
-    controls.classList.add('message-controls');
-    
-    // Delete button
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '✖';
-    delBtn.title = 'Delete message';
-    delBtn.onclick = () => msgEl.remove();
-    
-    // Resend button for user messages
-    const resendBtn = document.createElement('button');
-    resendBtn.textContent = '↻';
-    resendBtn.title = 'Resend message';
-    resendBtn.onclick = () => {
-        inputEl.value = text;
-        inputEl.focus();
-    };
+/* ---------- DOM Elements ---------- */
+const chatContainer = document.getElementById("chatContainer");
+const userInput = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
+const typingIndicator = document.getElementById("typingIndicator");
 
-    controls.appendChild(delBtn);
-    if (type === 'user') controls.appendChild(resendBtn);
-    msgEl.appendChild(controls);
+/* ---------- Render Messages ---------- */
+export function renderMessage(role, text) {
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("message", role);
 
-    chatArea.appendChild(msgEl);
-    chatArea.scrollTop = chatArea.scrollHeight; // Auto scroll
-    return msgEl;
+  const bubble = document.createElement("div");
+  bubble.classList.add("bubble");
+  bubble.innerHTML = text;
+
+  msgDiv.appendChild(bubble);
+  chatContainer.appendChild(msgDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// ---------- Typing Indicator ----------
-function appendTypingIndicator() {
-    const el = document.createElement('div');
-    el.classList.add('message', 'ai');
-    el.innerHTML = `<div class="typingCursor"></div>`;
-    chatArea.appendChild(el);
-    chatArea.scrollTop = chatArea.scrollHeight;
-    return el;
+/* ---------- Typing Indicator ---------- */
+export function showTyping() {
+  typingIndicator.style.display = "flex";
 }
 
-function removeTypingIndicator(el) {
-    if (el && el.parentNode) el.parentNode.removeChild(el);
+export function hideTyping() {
+  typingIndicator.style.display = "none";
 }
 
-// ---------- Render chat history ----------
-function renderChatHistory() {
-    const history = loadHistory();
-    chatArea.innerHTML = '';
-    history.forEach(msg => {
-        appendMessage(msg.type, msg.text, msg.model);
-    });
+/* ---------- Load History ---------- */
+export function loadChatHistory() {
+  const history = getHistory();
+  history.forEach(item => renderMessage(item.role, item.content));
 }
 
-// ---------- Clear chat UI ----------
-function clearChatUI() {
-    chatArea.innerHTML = '';
+/* ---------- Send User Message ---------- */
+export async function sendMessage() {
+  const text = userInput.value.trim();
+  if (!text) return;
+
+  // Render user message
+  renderMessage("user", text);
+  addMessage("user", text);
+  userInput.value = "";
+
+  // Show Lambo typing
+  showTyping();
+
+  // Determine if multi-model or single
+  try {
+    const lamboText = await fuseResponses(text);
+    hideTyping();
+
+    // Render Lambo message
+    renderMessage("lambo", lamboText);
+    addMessage("lambo", lamboText);
+  } catch (err) {
+    hideTyping();
+    renderMessage("lambo", `❌ Error: ${err.message}`);
+    addMessage("lambo", `❌ Error: ${err.message}`);
+  }
 }
 
-// ---------- Export functions if using modules ----------
-// export { appendMessage, appendTypingIndicator, removeTypingIndicator, renderChatHistory, clearChatUI };
+/* ---------- Event Listeners ---------- */
+sendBtn.addEventListener("click", sendMessage);
+
+userInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    sendMessage();
+  }
+});
+
+/* ---------- Initialization ---------- */
+export function initChat() {
+  loadChatHistory();
+  hideTyping();
+}
