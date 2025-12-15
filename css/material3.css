@@ -1,60 +1,83 @@
-/* Material 3 Base Theme — Blue Primary */
 :root {
-  --md-sys-color-primary: #2962FF;
-  --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-background: #f5f5f5;
-  --md-sys-color-surface: #ffffff;
-  --md-sys-color-on-surface: #000000;
-  --md-sys-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --md-sys-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-  --md-sys-radius: 16px;
+  /* Material 3 Color Tokens */
+  --md-primary: #4f8cff;
+  --md-on-primary: #ffffff;
+
+  --md-surface: #0b0f1a;
+  --md-surface-variant: #12182a;
+  --md-on-surface: #e6e9f2;
+
+  --md-outline: #2a3358;
+
+  --md-secondary: #7aa2ff;
+  --md-on-secondary: #ffffff;
+
+  --md-error: #ff6b6b;
+
+  /* Elevation */
+  --elevation-1: 0 1px 3px rgba(0,0,0,0.4);
+  --elevation-2: 0 4px 10px rgba(0,0,0,0.45);
+
+  /* Shape */
+  --radius-small: 12px;
+  --radius-medium: 18px;
+  --radius-large: 26px;
+
+  /* Motion */
+  --motion-fast: 150ms ease;
+  --motion-medium: 250ms ease;
+  --motion-slow: 400ms ease;
 }
 
-/* General Reset */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
-
-/* Body */
-body {
-  background-color: var(--md-sys-color-background);
-  color: var(--md-sys-color-on-surface);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* Cards */
-.card {
-  background: var(--md-sys-color-surface);
-  border-radius: var(--md-sys-radius);
-  box-shadow: var(--md-sys-elevation-2);
-  padding: 12px 16px;
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+               Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  background: var(--md-surface);
+  color: var(--md-on-surface);
 }
 
 /* Buttons */
 button {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
   border: none;
-  border-radius: var(--md-sys-radius);
-  padding: 12px 16px;
+  background: none;
+  color: inherit;
   cursor: pointer;
-  transition: all 0.2s;
-}
-button:hover { filter: brightness(1.1); }
-
-/* Inputs */
-input[type="text"], select {
-  border-radius: var(--md-sys-radius);
-  border: 1px solid #ccc;
-  padding: 10px 12px;
 }
 
-/* Scrollbar for chat area */
-.chatArea::-webkit-scrollbar {
-  width: 8px;
+button:active {
+  transform: scale(0.97);
 }
-.chatArea::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.2);
-  border-radius: 4px;
+
+/* Icon Button */
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-medium);
+  display: grid;
+  place-items: center;
+  background: var(--md-surface-variant);
+  box-shadow: var(--elevation-1);
+  transition: background var(--motion-fast), transform var(--motion-fast);
+}
+
+.icon-btn:hover {
+  background: #1a2240;
+}
+
+/* Scrollbar (mobile friendly) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-outline);
+  border-radius: 10px;
 }
